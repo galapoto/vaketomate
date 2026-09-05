@@ -1,0 +1,20 @@
+{
+  "colors": {
+    "green": "#C7E2AA",
+    "blue": "#C8EAFA",
+    "pink": "#F7BAD5",
+    "neutralFill": "#E6E6E6",
+    "neutralStroke": "#808080",
+    "white": "#FFFFFF",
+    "black": "#000000"
+  },
+  "styles": {
+    "activity": "whiteSpace=wrap;html=1;fillColor={{color}};strokeColor=none;rounded=0;shadow=1;dashed=0;strokeWidth=1;",
+    "decision": "rhombus;whiteSpace=wrap;html=1;fillColor={{color}};strokeColor=none;rounded=0;shadow=1;dashed=0;strokeWidth=1;",
+    "system": "strokeWidth=1;html=1;shape=mxgraph.flowchart.database;whiteSpace=wrap;fillColor=#E6E6E6;strokeColor=#808080;shadow=1;dashed=0;fontColor=default;rounded=0;",
+    "document": "shape=document;whiteSpace=wrap;html=1;boundedLbl=1;fillColor=#E6E6E6;strokeColor=#808080;strokeWidth=1;shadow=1;dashed=0;rounded=0;",
+    "flow": "endArrow=classic;html=1;rounded=0;",
+    "interaction": "endArrow=classic;startArrow=classic;html=1;rounded=0;",
+    "dataFlow": "endArrow=classic;html=1;rounded=0;dashed=1;"
+  }
+}
