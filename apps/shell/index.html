@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="fi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>VakeTomate</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <div class="eyebrow">VAKE · automation platform</div>
+      <h1>VakeTomate</h1>
+      <p>Yksi näkymä automaatioille, tarkistuksille, hyväksynnöille ja raporteille.</p>
+    </div>
+    <div class="statusPill">Platform foundation</div>
+  </header>
+
+  <main class="shell">
+    <section class="hero">
+      <div>
+        <h2>Työpöytä</h2>
+        <p>Moduulit ilmoittavat VakeTomatelle omat kykynsä, tilansa ja dashboard-mittarinsa. Sama alusta palvelee kaikkia tulevia automaatioita.</p>
+      </div>
+    </section>
+
+    <section>
+      <div class="sectionHead">
+        <h2>Sovellukset</h2>
+        <span id="moduleCount"></span>
+      </div>
+      <div id="modules" class="moduleGrid"></div>
+    </section>
+
+    <section>
+      <div class="sectionHead">
+        <h2>Yhteinen operatiivinen näkymä</h2>
+        <span>Dashboard-sopimus</span>
+      </div>
+      <div class="metricGrid">
+        <article class="metric"><span>Avoimet tarkistukset</span><strong>—</strong><small>Kaikista moduuleista</small></article>
+        <article class="metric"><span>Odottaa hyväksyntää</span><strong>—</strong><small>Yhteinen approval engine</small></article>
+        <article class="metric"><span>Katselmointi tulossa</span><strong>—</strong><small>Yhteinen scheduler</small></article>
+        <article class="metric"><span>Viimeisimmät virheet</span><strong>—</strong><small>Yhteinen audit/reporting</small></article>
+      </div>
+      <p class="muted">Mittarit ovat tässä vaiheessa rajapintasopimus. Kun moduulit alkavat tallentaa tapahtumia yhteiseen backendiin, samat kortit täyttyvät ilman moduulikohtaista dashboard-koodia.</p>
+    </section>
+  </main>
+
+  <script type="module" src="./app.mjs"></script>
+</body>
+</html>

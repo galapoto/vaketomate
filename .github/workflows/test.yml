@@ -1,0 +1,19 @@
+name: test
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+jobs:
+  node-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Prosessikuvaus domain and parser tests
+        run: npm run test:prosessikuvaus
+      - name: Shared platform package tests
+        run: node --test packages/*/tests/*.test.mjs
