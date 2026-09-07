@@ -13,4 +13,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - run: npm test
+      - name: Prosessikuvaus domain and parser tests
+        run: npm run test:prosessikuvaus
+      - name: Shared platform package tests
+        run: node --test packages/*/tests/*.test.mjs
