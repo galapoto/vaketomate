@@ -4,7 +4,7 @@ import { ArtefactRegistry } from '../../../packages/artefacts/src/artefact-regis
 import { ShareService, createSharePackage } from '../../../packages/sharing/src/share-service.mjs';
 import { InMemoryMetricStore, createMetric } from '../../../packages/reporting/src/metrics.mjs';
 import { scheduleReview } from '../../../packages/scheduler/src/review-scheduler.mjs';
-import { VAKE_GUIDE, qualitySummary } from './guide-policy.mjs';
+import { VAKE_GUIDE, qualitySummary, submissionReadiness } from './guide-policy.mjs';
 
 export function createProsessikuvausPlatform({shareAdapters={}}={}) {
   const audit=new AuditLog({store:new InMemoryAuditStore()});
@@ -27,7 +27,7 @@ export function createProsessikuvausPlatform({shareAdapters={}}={}) {
         module:'prosessikuvaus',
         entityType:'process_description',
         entityId:model.id,
-        payload:{quality,title:model.title}
+        payload:{quality,title:model.title,revision:model.revision}
       });
       metrics.record(createMetric({module:'prosessikuvaus',name:'process.generated'}));
       metrics.record(createMetric({module:'prosessikuvaus',name:'validation.warnings',value:quality.counts.warning}));
@@ -36,8 +36,12 @@ export function createProsessikuvausPlatform({shareAdapters={}}={}) {
     },
 
     createApproval(model,{requester=null,approver=null}={}) {
-      const quality=qualitySummary(model);
-      if (!quality.ready_for_owner_review) throw new Error('Process has blocking validation errors');
+      const readiness=submissionReadiness(model);
+      if (!readiness.ready) {
+        const error=new Error('Process is not ready for owner review');
+        error.readiness=readiness;
+        throw error;
+      }
       const workflow=approvals.create({
         module:'prosessikuvaus',
         entityType:'process_description',
@@ -51,15 +55,21 @@ export function createProsessikuvausPlatform({shareAdapters={}}={}) {
     },
 
     submitForApproval(model,{requester=null,approver=null,message='',artefacts:approvalArtefacts=[]}={}) {
+      const readiness=submissionReadiness(model);
+      if (!readiness.ready) {
+        const error=new Error('Process is not ready for owner review');
+        error.readiness=readiness;
+        throw error;
+      }
       if (!model.approval) this.createApproval(model,{requester,approver});
-      approvals.submit(model.approval,{requester,approver,message,artefacts:approvalArtefacts});
+      approvals.submit(model.approval,{requester,approver,message,artefacts:approvalArtefacts,revision:model.revision});
       metrics.record(createMetric({module:'prosessikuvaus',name:'approvals.submitted'}));
       return model.approval;
     },
 
     approve(model,{actor=null,message=''}={}) {
       if (!model.approval) throw new Error('Approval workflow has not been created');
-      approvals.approve(model.approval,{actor,message});
+      approvals.approve(model.approval,{actor:actor||model.approval.approver,message,revision:model.revision});
       model.review=scheduleReview({
         module:'prosessikuvaus',
         entityType:'process_description',
@@ -67,7 +77,7 @@ export function createProsessikuvausPlatform({shareAdapters={}}={}) {
         approvedAt:model.approval.decided_at,
         intervalMonths:VAKE_GUIDE.review_interval_months,
         assignee:model.approval.requester,
-        metadata:{title:model.title}
+        metadata:{title:model.title,approved_revision:model.revision}
       });
       metrics.record(createMetric({module:'prosessikuvaus',name:'approvals.approved'}));
       return {approval:model.approval,review:model.review};
@@ -75,7 +85,7 @@ export function createProsessikuvausPlatform({shareAdapters={}}={}) {
 
     requestChanges(model,{actor=null,reason}={}) {
       if (!model.approval) throw new Error('Approval workflow has not been created');
-      approvals.reject(model.approval,{actor,reason});
+      approvals.reject(model.approval,{actor:actor||model.approval.approver,reason,revision:model.revision});
       metrics.record(createMetric({module:'prosessikuvaus',name:'approvals.changes_requested'}));
       return model.approval;
     },
@@ -84,7 +94,7 @@ export function createProsessikuvausPlatform({shareAdapters={}}={}) {
       const pkg=createSharePackage({
         module:'prosessikuvaus',entityType:'process_description',entityId:model.id,
         subject,message,recipients,cc,attachments,links,classification,
-        metadata:{title:model.title}
+        metadata:{title:model.title,revision:model.revision}
       });
       const result=await sharing.send(channel,pkg,context);
       metrics.record(createMetric({module:'prosessikuvaus',name:'shares.sent',dimensions:{channel}}));
