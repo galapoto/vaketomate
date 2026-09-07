@@ -46,9 +46,10 @@ test('canonical graph supports two decision branches',()=>{
   const issues=validateAgainstVakeGuide(model);
   assert.equal(issues.some(i=>i.code==='decision.not_question'),false);
   assert.equal(issues.some(i=>i.code==='decision.no_branch'),false);
+  assert.equal(issues.some(i=>i.code==='decision.branch_label.missing'),false);
 });
 
-test('platform approval schedules 12 month review',()=>{
+test('platform approval schedules 12 month review and binds decision to revision',()=>{
   const model=createProcessDescription({title:'Valmis prosessi'});
   const actor=addActor(model,{name:'Kuvaaja'});
   const start=addNode(model,{type:NODE_TYPES.START});
@@ -56,12 +57,20 @@ test('platform approval schedules 12 month review',()=>{
   const end=addNode(model,{type:NODE_TYPES.END});
   addEdge(model,{from:start.id,to:activity.id});
   addEdge(model,{from:activity.id,to:end.id});
-  model.phase_details.find(p=>p.node_id===activity.id).responsibility='Kuvaaja';
-  model.phase_details.find(p=>p.node_id===activity.id).critical_tasks=['Kuvaa vaihe'];
+  const phase=model.phase_details.find(p=>p.node_id===activity.id);
+  phase.responsibility='Kuvaaja';
+  phase.critical_tasks=['Kuvaa vaihe'];
+  Object.assign(model.summary,{
+    purpose:'Kuvaa hyväksyntäprosessin.',
+    owner:'Prosessin omistaja',
+    initial_state:'Prosessikuvaus on valmis tarkistettavaksi',
+    final_state:'Prosessikuvaus on hyväksytty'
+  });
   const platform=createProsessikuvausPlatform();
   const quality=qualitySummary(model);
   assert.equal(quality.ready_for_owner_review,true);
   platform.submitForApproval(model,{requester:{id:'u1'},approver:{id:'owner'},message:'Valmis hyväksyttäväksi'});
+  assert.equal(model.approval.submitted_revision,model.revision);
   const result=platform.approve(model,{actor:{id:'owner'}});
   assert.equal(result.approval.status,'approved');
   assert.equal(result.review.interval_months,12);
