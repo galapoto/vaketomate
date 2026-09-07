@@ -74,9 +74,10 @@ export class ShareService {
 }
 
 export class BrowserDownloadAdapter {
-  constructor({documentRef=globalThis.document,urlRef=globalThis.URL}={}) {
+  constructor({documentRef=globalThis.document,urlRef=globalThis.URL,schedule=(fn)=>setTimeout(fn,0)}={}) {
     this.documentRef=documentRef;
     this.urlRef=urlRef;
+    this.schedule=schedule;
   }
   async send(pkg) {
     if (!this.documentRef || !this.urlRef) throw new Error('Browser download is unavailable');
@@ -90,7 +91,9 @@ export class BrowserDownloadAdapter {
       a.href=url;
       a.download=attachment.filename || 'attachment';
       a.click();
-      this.urlRef.revokeObjectURL(url);
+      // Some browsers consume the object URL asynchronously after click(). Revoking
+      // synchronously can race the download. Release it on the next task instead.
+      this.schedule(()=>this.urlRef.revokeObjectURL(url));
       downloads.push(a.download);
     }
     return {channel:'download',downloads};
