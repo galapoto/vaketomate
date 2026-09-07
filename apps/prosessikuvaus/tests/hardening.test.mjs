@@ -56,12 +56,12 @@ test('linear reorder rewires graph semantics, not only array order',()=>{
 });
 
 test('linear reorder refuses branched graph',()=>{
-  const {model,actor,one,end}=basicModel();
+  const {model,actor,one,two,end}=basicModel();
   const branch=addNode(model,{type:NODE_TYPES.ACTIVITY,text:'Tekee vaihtoehdon',actorId:actor.id});
   model.phase_details.find(x=>x.node_id===branch.id).responsibility='Käsittelijä';
   addEdge(model,{from:one.id,to:branch.id});
   addEdge(model,{from:branch.id,to:end.id});
-  assert.throws(()=>reorderLinearFlow(model,[one.id,branch.id]),/branched/i);
+  assert.throws(()=>reorderLinearFlow(model,[one.id,two.id,branch.id]),/branched/i);
 });
 
 test('global reachability detects disconnected cycle',()=>{
