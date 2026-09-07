@@ -45,7 +45,8 @@ export function validateAgainstVakeGuide(model) {
     }
 
     for (const node of keyNodes) {
-      if (!node.actor_id || !nodeActor(model,node)) add('node.actor.missing','error','Vaiheen vastuutoimija/uimarata puuttuu.',node.id,'actor');
+      const actor=nodeActor(model,node);
+      if (!node.actor_id || !actor || isUnresolvedActor(actor.name)) add('node.actor.missing','error','Vaiheen vastuutoimija/uimarata puuttuu tai on vielä vahvistamatta.',node.id,'actor');
       if (!node.text?.trim()) add('node.text.missing','error','Vaiheen teksti puuttuu.',node.id,'text');
       if (node.type===NODE_TYPES.DECISION) validateDecision(model,node,add);
       if (incoming(model,node.id).length===0) add('node.unreachable.local','error','Vaiheeseen ei johda virtausta.',node.id);
@@ -71,7 +72,7 @@ export function validateAgainstVakeGuide(model) {
     if (phaseIds.has(detail.node_id)) add('phase.duplicate','error','Samalle vaiheelle on useampi vaihekuvaus.',detail.node_id);
     phaseIds.add(detail.node_id);
     if (!model.nodes.some(n=>n.id===detail.node_id)) add('phase.orphan','error','Vaihekuvaus viittaa puuttuvaan kaaviovaiheeseen.',detail.node_id);
-    if (!String(detail.responsibility||'').trim()) add('phase.responsibility.missing','warning','Vaiheen vastuu puuttuu.',detail.node_id,'responsibility');
+    if (!String(detail.responsibility||'').trim() || isUnresolvedActor(detail.responsibility)) add('phase.responsibility.missing','warning','Vaiheen vastuu puuttuu tai on vielä vahvistamatta.',detail.node_id,'responsibility');
     if (!Array.isArray(detail.critical_tasks)||detail.critical_tasks.length===0) add('phase.critical_tasks.missing','info','Kriittisiä tehtäviä ei ole kuvattu.',detail.node_id,'critical_tasks');
   }
 
@@ -79,11 +80,6 @@ export function validateAgainstVakeGuide(model) {
   return issues;
 }
 
-/**
- * Owner-review readiness is intentionally stricter than generic validation.
- * VAKE summary fields such as metrics or identified improvements can legitimately be
- * blank/not-applicable, so they remain review information rather than automatic blockers.
- */
 export function submissionReadiness(model) {
   const issues=validateAgainstVakeGuide(model);
   const blockers=issues.filter(i=>i.severity==='error');
@@ -96,7 +92,8 @@ export function submissionReadiness(model) {
 
   for (const node of model.nodes.filter(n=>![NODE_TYPES.START,NODE_TYPES.END].includes(n.type))) {
     const detail=model.phase_details.find(p=>p.node_id===node.id);
-    if (!detail || !String(detail.responsibility||'').trim()) {
+    const actor=nodeActor(model,node);
+    if (!actor || isUnresolvedActor(actor.name) || !detail || !String(detail.responsibility||'').trim() || isUnresolvedActor(detail.responsibility)) {
       missingCore.push({code:'submission.phase.responsibility.missing',entity_id:node.id,field:'responsibility',message:'Vahvista vaiheen vastuu ennen omistajan hyväksyntää.'});
     }
   }
@@ -104,7 +101,7 @@ export function submissionReadiness(model) {
   return {
     ready:blockers.length===0 && missingCore.length===0,
     blockers,
-    missing_core:missingCore,
+    missing_core:dedupeByKey(missingCore,x=>`${x.code}|${x.entity_id||''}|${x.field||''}`),
     review_items:issues.filter(i=>i.severity!=='error')
   };
 }
@@ -118,7 +115,7 @@ export function qualitySummary(model) {
     ready_for_owner_review:readiness.ready,
     counts,
     key_phase_count:model.nodes.filter(n=>![NODE_TYPES.START,NODE_TYPES.END].includes(n.type)).length,
-    actor_count:model.actors.length,
+    actor_count:model.actors.filter(a=>!isUnresolvedActor(a.name)).length,
     issue_count:issues.length,
     missing_core_count:readiness.missing_core.length
   };
@@ -212,4 +209,13 @@ function walk(model,seed,direction) {
 function isQuestion(text='') {
   const value=String(text).trim();
   return value.endsWith('?') || /^(onko|voidaanko|tehdäänkö|hyväksytäänkö|myönnetäänkö|tarvitaanko|jatketaanko|täyttyykö|sopiiko)\b/iu.test(value);
+}
+
+function isUnresolvedActor(value='') {
+  return canonicalActor(String(value||'')).toLocaleLowerCase('fi-FI')==='tarkista toimija';
+}
+
+function dedupeByKey(items,keyFn) {
+  const seen=new Set();
+  return items.filter(item=>{const key=keyFn(item);if(seen.has(key))return false;seen.add(key);return true;});
 }
