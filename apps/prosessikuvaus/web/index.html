@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="fi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>VakeTomate · Prosessikuvaus</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<header class="app-header">
+  <div>
+    <div class="eyebrow">VakeTomate / Prosessikuvaus</div>
+    <h1>Prosessikuvaus</h1>
+    <p>Muodosta VAKE-ohjeen mukainen prosessikuvaus lähdetekstistä ja tarkista vain epävarmat kohdat.</p>
+  </div>
+  <div class="header-status" id="headerStatus">Luonnos</div>
+</header>
+
+<main class="shell">
+  <details class="capture card" id="capturePanel" open>
+    <summary>
+      <span><strong>Liitä lähdeteksti</strong><small>Numeroitu lista, vapaamuotoinen teksti tai keskeneräinen luonnos</small></span>
+      <span class="chevron">⌄</span>
+    </summary>
+    <div class="capture-body">
+      <textarea id="sourceText" placeholder="Liitä prosessin kuvaus tähän…" spellcheck="true"></textarea>
+      <div class="capture-actions">
+        <div class="quiet" id="draftStatus">Lähdeteksti tallentuu selaimeen myös ennen tulkintaa.</div>
+        <button class="primary" id="parseBtn">Muodosta prosessi</button>
+      </div>
+      <div class="message" id="parseMessage" hidden></div>
+    </div>
+  </details>
+
+  <div class="process-switch" id="processSwitch" hidden>
+    <label>Prosessi <select id="processSelect"></select></label>
+  </div>
+
+  <section class="workspace card" id="workspace" hidden>
+    <div class="tabs" role="tablist" aria-label="IMS prosessikuvauksen näkymät">
+      <button class="tab active" data-tab="summary" role="tab">Yhteenveto</button>
+      <button class="tab" data-tab="diagram" role="tab">Prosessikaavio</button>
+      <button class="tab" data-tab="phases" role="tab">Vaiheiden kuvaus</button>
+    </div>
+
+    <div class="workspace-toolbar">
+      <div class="quality-pill" id="qualityPill">Tarkistus kesken</div>
+      <div class="toolbar-actions">
+        <button class="secondary" id="reviewBtn">Tarkistettavaa <span id="issueCount">0</span></button>
+      </div>
+    </div>
+
+    <section class="tab-panel active" id="tab-summary">
+      <div class="panel-intro">
+        <div><h2>Prosessin yhteenveto</h2><p>Kuvaa vain koko prosessin kannalta keskeiset tiedot. Työkalu ei täytä organisaatiotietoja arvaamalla.</p></div>
+      </div>
+      <div class="summary-grid" id="summaryFields"></div>
+    </section>
+
+    <section class="tab-panel" id="tab-diagram">
+      <div class="panel-intro row">
+        <div><h2>Prosessikaavio</h2><p>Jokainen toimija omalla uimaradallaan. Normaali eteneminen vasemmalta oikealle.</p></div>
+        <button class="secondary" id="editDiagramBtn">Muokkaa kaaviota</button>
+      </div>
+      <div class="diagram-rules"><span>Toimija = uimarata</span><span>Vaihe = tekeminen</span><span>Päätös = kysymys</span><span>Suositus ≤ 20 vaihetta</span></div>
+      <div class="diagram" id="diagram"></div>
+    </section>
+
+    <section class="tab-panel" id="tab-phases">
+      <div class="panel-intro">
+        <div><h2>Vaiheiden kuvaus</h2><p>Avaa vain se vaihe, jota haluat tarkentaa. Kaavion pidempi työohje kuuluu tänne, ei laatikon sisään.</p></div>
+      </div>
+      <div id="phaseList" class="phase-list"></div>
+    </section>
+  </section>
+</main>
+
+<aside class="drawer" id="drawer" aria-hidden="true">
+  <div class="drawer-head">
+    <div><div class="eyebrow">Tarkempi muokkaus</div><h2 id="drawerTitle">Tarkista tulkinta</h2></div>
+    <button class="icon-btn" id="closeDrawer" aria-label="Sulje">×</button>
+  </div>
+  <div class="drawer-tabs">
+    <button class="drawer-tab active" data-drawer="edit">Vaiheet</button>
+    <button class="drawer-tab" data-drawer="issues">Tarkistukset</button>
+  </div>
+  <div class="drawer-body active" id="drawer-edit"><div id="nodeEditor"></div></div>
+  <div class="drawer-body" id="drawer-issues"><div id="issues"></div></div>
+</aside>
+<div class="backdrop" id="backdrop"></div>
+
+<footer>VakeTomate · Prosessikuvaus · VAKE-ohje on ensisijainen mallinnussääntö</footer>
+<script type="module" src="./app.mjs"></script>
+</body>
+</html>

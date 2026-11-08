@@ -1,0 +1,17 @@
+{
+  "name": "vaketomate",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "test": "node --test apps/prosessikuvaus/tests/*.test.mjs packages/*/tests/*.test.mjs",
+    "test:prosessikuvaus": "node --test apps/prosessikuvaus/tests/*.test.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
